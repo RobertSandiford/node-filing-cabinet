@@ -25,6 +25,8 @@ const isRelative = require('is-relative-path');
 
 const defaultLookups = {
   '.js': jsLookup,
+  '.cjs': jsLookup,
+  '.mjs': jsLookup,
   '.jsx': jsLookup,
   '.ts': tsLookup,
   '.tsx': tsLookup,
