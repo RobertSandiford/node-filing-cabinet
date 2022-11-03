@@ -1,5 +1,5 @@
 {
-  "name": "filing-cabinet",
+  "name": "sxy-filing-cabinet",
   "version": "3.3.0",
   "description": "Find files based on partial paths",
   "main": "index.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mrjoelkemp/node-filing-cabinet.git"
+    "url": "git@github.com:RobertSandiford/node-filing-cabinet.git"
   },
   "keywords": [
     "lookup",
