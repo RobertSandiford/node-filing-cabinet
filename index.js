@@ -74,9 +74,15 @@ module.exports = function cabinet(options) {
   debug(`found a resolver for ${ext}`);
 
   options.dependency = partial;
-  const result = resolver(options);
+  let result = resolver(options);
 
   debug(`resolved path for ${partial}: ${result}`);
+
+  if (result) {
+    result = fs.realpathSync(result)
+    debug(`converted to realpath: ${result}`);
+  }
+
   return result;
 };
 
