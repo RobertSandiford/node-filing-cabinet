@@ -1,6 +1,6 @@
 {
   "name": "sxy-filing-cabinet",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "Find files based on partial paths",
   "main": "index.js",
   "bin": {
