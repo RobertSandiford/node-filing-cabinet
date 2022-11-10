@@ -1,5 +1,6 @@
 'use strict';
 
+const { createRequire } = require('module')
 const path = require('path');
 const debug = require('debug')('cabinet');
 const {createMatchPath} = require('tsconfig-paths');
@@ -52,6 +53,7 @@ const defaultLookups = {
  * @param {Boolean} [options.noTypeDefinitions] Whether to return '.d.ts' files or '.js' files for a dependency
  */
 module.exports = function cabinet(options) {
+    
   const {
     partial,
     filename,
@@ -76,7 +78,13 @@ module.exports = function cabinet(options) {
   debug(`found a resolver for ${ext}`);
 
   options.dependency = partial;
+
+
   let result = resolver(options);
+
+  if (!result) {
+    throw new Error('cabinet: no result')
+  }
 
   debug(`resolved path for ${partial}: ${result}`);
 
@@ -318,7 +326,7 @@ function tsLookup({dependency, filename, directory, webpackConfig, tsConfig, tsC
   return result ? path.resolve(result) : '';
 }
 
-function commonJSLookup(options) {
+function commonJSLookupOriginal(options) {
   const {filename, directory, nodeModulesConfig, tsConfig} = options;
   let {dependency} = options;
 
@@ -375,11 +383,75 @@ function commonJSLookup(options) {
       // Add fileDir to resolve index.js files in that dir
       moduleDirectory: ['node_modules', directory]
     });
-    debug('resolved path: ' + result);
   } catch (e) {
     debug('could not resolve ' + dependency);
   }
 
+  return result;
+}
+
+const nodeResolveCache = {}
+function getNodeResolve(filename) {
+  if (filename in nodeResolveCache) return nodeResolveCache[filename]
+  else return nodeResolveCache[filename] = createRequire(filename).resolve
+}
+
+function commonJSLookup(options) {
+  const {filename, directory, nodeModulesConfig, tsConfig} = options;
+  let {dependency} = options;
+  
+  const resolve = getNodeResolve(filename)
+  
+  if (!dependency) {
+    debug('blank dependency given. Returning early.');
+    return '';
+  }
+  
+  // Need to resolve partials within the directory of the module, not filing-cabinet
+  // const moduleLookupDir = path.join(directory, 'node_modules');
+  
+  // debug('adding ' + moduleLookupDir + ' to the require resolution paths');
+  
+  // appModulePath.addPath(moduleLookupDir);
+  
+  //console.log('relative dependency', dependency)
+  
+  // // Make sure the partial is being resolved to the filename's context
+  // // 3rd party modules will not be relative
+  // if (dependency[0] === '.') {
+  //   dependency = path.resolve(path.dirname(filename), dependency);
+  // }
+  
+  let result = '';
+  
+  // Allows us to configure what is used as the "main" entry point
+  // function packageFilter(packageJson) {
+  //   packageJson.main = packageJson[nodeModulesConfig.entry] ? packageJson[nodeModulesConfig.entry] : packageJson.main;
+  //   return packageJson;
+  // }
+  
+  // const tsCompilerOptions = getCompilerOptionsFromTsConfig(tsConfig);
+  // const allowMixedJsAndTs = tsCompilerOptions.allowJs;
+  // let extensions = ['.js', '.jsx'];
+  // if (allowMixedJsAndTs) {
+  //   // Let the typescript engine take a stab at resolving this one. This lookup will
+  //   // respect any custom paths in tsconfig.json
+  //   result = tsLookup(options);
+  //   if (result) {
+  //     debug('typescript successfully resolved commonjs module: ', result);
+  //     return result;
+  //   }
+  //   // Otherwise, let the commonJS resolver look for plain .ts file imports.
+  //   extensions = extensions.concat(['.ts', '.tsx']);
+  // }
+
+  try {
+    result = resolve(dependency);
+    debug('resolved path: ' + result);
+  } catch (e) {
+    console.log(`Error resolving ${dependency} from ${filename} with node resolution`)
+    console.log(e)
+  }
   return result;
 }
 
